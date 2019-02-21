@@ -1,33 +1,34 @@
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.sql2o.*;
-import java.util.Calendar;
 import java.util.List;
 
 public class MyDatabase {
     private Sql2o sql2o;
 
     public MyDatabase() {
-        this.sql2o = new Sql2o("jdbc:mysql://localhost:3306/Entries", "root", "Jellybean01!");
+        String connectionUrl = "jdbc:mysql://localhost:3306/SCORING?autoReconnect=false&useSSL=false";
+        this.sql2o = new Sql2o(connectionUrl, "root", "Jellybean01!");
     }
 
-    public void inputEntry(int score, String fileName) {
+    public void inputEntry(String fileName, int score) {
         String insertSql =
-                "INSERT INTO entries VALUES (:id, :score, :fileName, :date);";
-        Calendar date = Calendar.getInstance();
-        int id = this.nextId();
+                "INSERT INTO entries VALUES (:id, :score, :fileName, :dateScored);";
+        DateTime date = new DateTime(DateTimeZone.UTC);
 
         try (Connection con = sql2o.open()) {
             con.createQuery(insertSql)
-                    .addParameter("id", id)
+                    .addParameter("id", 0)
                     .addParameter("score", score)
-                    .addParameter("filename", score)
-                    .addParameter("date", date)
+                    .addParameter("fileName", fileName)
+                    .addParameter("dateScored", date)
                     .executeUpdate();
         }
     }
 
     // gets all entries of a specific file in the database
     public List<Entry> getAllEntries(String target) {
-        String sql = "SELECT id, score, fileName, date FROM entries WHERE filename = " + target;
+        String sql = "SELECT id, score, fileName, dateScored FROM entries WHERE filename = " + target;
 
         try(Connection con = sql2o.open()) {
             return con.createQuery(sql).executeAndFetch(Entry.class);
@@ -36,7 +37,7 @@ public class MyDatabase {
 
     //gets all entries in a custom date range
     public List<Entry> getEntriesBetweenDates(String fromDate, String toDate){
-        String sql = "SELECT id, score, fileName, date FROM entries " +
+        String sql = "SELECT id, score, fileName, dateScored FROM entries " +
                 "WHERE date >= :fromDate  AND date < :toDate";
 
         try(Connection con = sql2o.open()) {
@@ -70,15 +71,6 @@ public class MyDatabase {
 
         try(Connection con = sql2o.open()) {
             return con.createQuery(sql).executeAndFetch(Entry.class);
-        }
-    }
-
-    //gets highest ID number to set the next entry
-    private int nextId() {
-        String sql = "SELECT MAX(id) FROM entries";
-
-        try(Connection con = sql2o.open()) {
-            return con.createQuery(sql).executeAndFetch(Entry.class).get(0).getId();
         }
     }
 }

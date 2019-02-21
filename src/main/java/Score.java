@@ -1,4 +1,5 @@
 import java.io.*;
+import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -6,7 +7,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Score {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ClassNotFoundException, SQLException {
         Map<String, Integer> scoreTable = new HashMap<String, Integer>();
         MyDatabase myDatabase = new MyDatabase();
         int argsCounter = 0;
@@ -26,6 +27,13 @@ public class Score {
         scoreTable.put("tt", -2);
         scoreTable.put("frameset", -5);
         scoreTable.put("frame", -5);
+
+        // request command from user
+        System.out.println("Chose Action: ");
+        Scanner scanner = new Scanner(System.in);
+
+        String userCommand = scanner.next();
+        System.out.println(userCommand);
 
         
         // retrieve lowest score for a given file
@@ -81,51 +89,44 @@ public class Score {
         }
 
         // actually scores the HTML file
-        if (args.length > 0 && args[argsCounter] != null && args[argsCounter].equals("-score")) {
-            argsCounter++;
+        if (userCommand.equals("score")) {
+            try {
+                // request command from user
+                System.out.println("Enter Filename: ");
 
-            for (;argsCounter < args.length; argsCounter++) {
-                try {
-                    //loads entire file into ArrayList of Strings
-                    FileReader fr = new FileReader(args[argsCounter]);
-                    BufferedReader br = new BufferedReader(fr);
-                    int score = 0;
+                String userFileName = scanner.next();
 
-                    String str;
-                    ArrayList<String> file = new ArrayList<>();
-                    while ((str = br.readLine()) != null) {
-                        file.add(str.toLowerCase());
-                    }
+                //loads entire file into ArrayList of Strings
+                FileReader fr = new FileReader(userFileName);
+                BufferedReader br = new BufferedReader(fr);
+                int score = 0;
 
+                Scanner fileScanner = new Scanner( new File(userFileName) );
+                String fileContents = fileScanner.useDelimiter("\\A").next();
+                fileScanner.close(); // Put this call in a finally block
+                System.out.println(fileContents);
 
-                    // Scoring
-                    Iterator<String> scoreKey;
+                // Scoring
+                Iterator<String> scoreKey;
 
-                    for (int j = 0; j < (file.size()); j++) {
-                        // refreshes iterator
-                        scoreKey = scoreTable.keySet().iterator();
+                String tag = "html";
 
-                        // checks each line for specific element
-                        while (scoreKey.hasNext()) {
-                            String elem = scoreKey.next();
+                Pattern pattern = Pattern.compile("<" + tag);
+                Matcher matcher = pattern.matcher(fileContents);
+                int count = 0;
+                while (matcher.find()) count++;
+                System.out.println(count);
 
-                            int nubOccurrences = findOccurrences(file.get(j), "/" + elem);
-
-                            score += (scoreTable.get(elem) * nubOccurrences);
-                        }
-                    }
-
-                    System.out.println("Total for " + args[argsCounter] + ": " + score + "\n");
+                System.out.printf("Total html tags for %s: %d\n%n", userFileName, count);
 
 
-                    // stores entry into SQL database
-                    myDatabase.inputEntry(score, args[argsCounter]);
+                // stores entry into SQL database
+                myDatabase.inputEntry(userFileName, count);
 
-                } catch (FileNotFoundException e) {
-                    System.out.println("File Not Found. File Number: " + (argsCounter + 1));
-                } catch (IOException e) {
-                    System.out.println("IOException.  File Number: " + (argsCounter + 1));
-                }
+            } catch (FileNotFoundException e) {
+                System.out.println("File Not Found. File Number: " + (argsCounter + 1));
+            } catch (IOException e) {
+                System.out.println("IOException.  File Number: " + (argsCounter + 1));
             }
         }
 
