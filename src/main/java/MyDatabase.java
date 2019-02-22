@@ -28,17 +28,19 @@ public class MyDatabase {
 
     // gets all entries of a specific file in the database
     public List<Entry> getAllEntries(String target) {
-        String sql = "SELECT id, score, fileName, dateScored FROM entries WHERE filename = " + target;
+        String sql = "SELECT * FROM entries WHERE fileName = :fileName";
 
         try(Connection con = sql2o.open()) {
-            return con.createQuery(sql).executeAndFetch(Entry.class);
+            return con.createQuery(sql)
+                    .addParameter("fileName", target)
+                    .executeAndFetch(Entry.class);
         }
     }
 
     //gets all entries in a custom date range
     public List<Entry> getEntriesBetweenDates(String fromDate, String toDate){
-        String sql = "SELECT id, score, fileName, dateScored FROM entries " +
-                "WHERE date >= :fromDate  AND date < :toDate";
+        String sql = "SELECT * FROM entries " +
+                "WHERE dateScored >= :fromDate  AND dateScored <= :toDate";
 
         try(Connection con = sql2o.open()) {
             return con.createQuery(sql)
@@ -50,27 +52,34 @@ public class MyDatabase {
 
     // gets maximum score in a database
     public List<Entry> getMaxScore(String target) {
-        String sql = "SELECT MAX(Score) FROM entries WHERE fileName= " + target;
+        String sql = "SELECT MAX(score) FROM entries WHERE fileName = :fileName";
 
         try(Connection con = sql2o.open()) {
-            return con.createQuery(sql).executeAndFetch(Entry.class);
+
+            return con.createQuery(sql)
+                    .addParameter("fileName", target)
+                    .executeAndFetch(Entry.class);
         }
     }
 
     // gets minimum score in a database
     public List<Entry> getMinScore(String target) {
-        String sql = "SELECT MIN(Score) FROM entries WHERE fileName= " + target;
+        String sql = "SELECT MIN(score) FROM entries WHERE fileName = :fileName";
 
         try(Connection con = sql2o.open()) {
-            return con.createQuery(sql).executeAndFetch(Entry.class);
+            return con.createQuery(sql)
+                    .addParameter("fileName", target)
+                    .executeAndFetch(Entry.class);
         }
     }
 
     public List<Entry> getAvgScore(String target) {
-        String sql = "SELECT Avg(Score) FROM entries WHERE filename = " + target;
+        String sql = "SELECT Avg(score) FROM entries WHERE fileName = :fileName";
 
         try(Connection con = sql2o.open()) {
-            return con.createQuery(sql).executeAndFetch(Entry.class);
+            return con.createQuery(sql)
+                    .addParameter("fileName", target)
+                    .executeAndFetch(Entry.class);
         }
     }
 }
